@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_USER = 'YOUR_DOCKERHUB_USERNAME'          // <-- change this
+        DOCKERHUB_USER = 'laibafaiz306'          // <-- change this
         BACKEND_IMAGE  = "${DOCKERHUB_USER}/galaxy-backend"
         FRONTEND_IMAGE = "${DOCKERHUB_USER}/galaxy-frontend"
         IMAGE_TAG      = "${BUILD_NUMBER}"
