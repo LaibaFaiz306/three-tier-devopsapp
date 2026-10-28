@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: galaxy
+data:
+  DB_HOST: postgres
+  DB_PORT: "5432"
+  DB_NAME: galaxydb
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-secret
+  namespace: galaxy
+type: Opaque
+stringData:
+  DB_USER: postgres
+  DB_PASSWORD: postgres

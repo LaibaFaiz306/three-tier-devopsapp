@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stellar · Plant a wish among the stars</title>
+  <meta name="description" content="An interactive 3D galaxy. Plant a star with a message and watch it join the spiral." />
+  <link rel="stylesheet" href="style.css" />
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.js" } }
+  </script>
+</head>
+<body>
+  <canvas id="scene"></canvas>
+
+  <header class="brand">
+    <h1>Stellar</h1>
+    <p>Plant a wish among the stars</p>
+  </header>
+
+  <div class="hud">
+    <div class="counter"><span class="spark">✦</span> <b id="count">0</b> stars</div>
+    <button id="reset" class="ghost" type="button">Reset view</button>
+  </div>
+
+  <aside class="panel">
+    <h2>Plant a star</h2>
+    <form id="form" autocomplete="off">
+      <input id="name" maxlength="40" placeholder="Your name" required />
+      <textarea id="message" maxlength="140" rows="3" placeholder="Leave a short message…" required></textarea>
+      <div class="swatches" id="swatches" role="radiogroup" aria-label="Star color"></div>
+      <button id="submit" type="submit">Launch into the galaxy</button>
+      <p id="error" class="error" role="alert"></p>
+    </form>
+    <p class="hint">Drag to rotate · Scroll to zoom · Click a star to read it</p>
+  </aside>
+
+  <div id="tip" class="tip"></div>
+  <div id="detail" class="detail">
+    <span id="d-dot" class="dot"></span>
+    <p id="d-msg"></p>
+    <small id="d-meta"></small>
+  </div>
+
+  <div id="loader" class="loader"><div class="ring"></div><span>Charting the galaxy…</span></div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

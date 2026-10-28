@@ -1,0 +1,19 @@
+# Optional: needs an ingress controller (minikube addons enable ingress).
+# Add "<minikube-ip> galaxy.local" to your hosts file, then: kubectl apply -f k8s-optional/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: galaxy-ingress
+  namespace: galaxy
+spec:
+  rules:
+    - host: galaxy.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
