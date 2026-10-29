@@ -28,17 +28,18 @@ pipeline {
         stage('Deploy to EC2') {
             steps {
                 sh '''
-                    // Stop and remove old running containers if they exist
+                    # Stop and remove old running containers if they exist
                     docker stop galaxy-backend galaxy-frontend || true
                     docker rm galaxy-backend galaxy-frontend || true
 
-                    // Run backend container
+                    # Run backend container
                     docker run -d --name galaxy-backend -p 5000:5000 laibafaiz306/galaxy-backend:latest
 
-                    // Run frontend container
+                    # Run frontend container
                     docker run -d --name galaxy-frontend -p 80:80 laibafaiz306/galaxy-frontend:latest
                 '''
             }
+        }
         }
     }
 }
