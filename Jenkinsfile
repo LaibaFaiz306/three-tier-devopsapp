@@ -2,68 +2,43 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_USER = 'laibafaiz306'          // <-- change this
-        BACKEND_IMAGE  = "${DOCKERHUB_USER}/galaxy-backend"
-        FRONTEND_IMAGE = "${DOCKERHUB_USER}/galaxy-frontend"
-        IMAGE_TAG      = "${BUILD_NUMBER}"
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds')
     }
 
     stages {
-        stage('Checkout') {
-            steps { checkout scm }
-        }
-
-        stage('Backend Tests') {
+        stage('Build & Push Backend') {
             steps {
-                dir('backend') {
-                    sh 'npm install'
-                    sh 'npm test'
-                }
+                sh '''
+                    echo "$DOCKERHUB_CREDENTIALS_PSW" | docker login -u "$DOCKERHUB_CREDENTIALS_USR" --password-stdin
+                    docker build -t laibafaiz306/galaxy-backend:latest ./backend
+                    docker push laibafaiz306/galaxy-backend:latest
+                '''
             }
         }
 
-        stage('Build Docker Images') {
+        stage('Build & Push Frontend') {
             steps {
-                sh 'docker build -t $BACKEND_IMAGE:$IMAGE_TAG -t $BACKEND_IMAGE:latest ./backend'
-                sh 'docker build -t $FRONTEND_IMAGE:$IMAGE_TAG -t $FRONTEND_IMAGE:latest ./frontend'
+                sh '''
+                    docker build -t laibafaiz306/galaxy-frontend:latest ./frontend
+                    docker push laibafaiz306/galaxy-frontend:latest
+                '''
             }
         }
 
-        stage('Push to Docker Hub') {
+        stage('Deploy to EC2') {
             steps {
-                // Jenkins credential (Username with password), ID: dockerhub-creds
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
-                                                  usernameVariable: 'DH_USER',
-                                                  passwordVariable: 'DH_PASS')]) {
-                    sh 'echo $DH_PASS | docker login -u $DH_USER --password-stdin'
-                    sh 'docker push $BACKEND_IMAGE:$IMAGE_TAG'
-                    sh 'docker push $BACKEND_IMAGE:latest'
-                    sh 'docker push $FRONTEND_IMAGE:$IMAGE_TAG'
-                    sh 'docker push $FRONTEND_IMAGE:latest'
-                }
+                sh '''
+                    // Stop and remove old running containers if they exist
+                    docker stop galaxy-backend galaxy-frontend || true
+                    docker rm galaxy-backend galaxy-frontend || true
+
+                    // Run backend container
+                    docker run -d --name galaxy-backend -p 5000:5000 laibafaiz306/galaxy-backend:latest
+
+                    // Run frontend container
+                    docker run -d --name galaxy-frontend -p 80:80 laibafaiz306/galaxy-frontend:latest
+                '''
             }
         }
-
-        stage('Deploy to Kubernetes') {
-            steps {
-                // Jenkins credential (Secret file), ID: kubeconfig
-                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
-                    sh '''
-                        rm -rf k8s-out && cp -r k8s k8s-out
-                        sed -i "s|YOUR_DOCKERHUB_USERNAME/galaxy-backend:latest|$BACKEND_IMAGE:$IMAGE_TAG|g" k8s-out/backend.yaml
-                        sed -i "s|YOUR_DOCKERHUB_USERNAME/galaxy-frontend:latest|$FRONTEND_IMAGE:$IMAGE_TAG|g" k8s-out/frontend.yaml
-                        kubectl apply -f k8s-out/
-                        kubectl -n galaxy rollout status deployment/backend --timeout=120s
-                        kubectl -n galaxy rollout status deployment/frontend --timeout=120s
-                    '''
-                }
-            }
-        }
-    }
-
-    post {
-        always  { sh 'docker logout || true' }
-        success { echo 'Pipeline finished successfully' }
-        failure { echo 'Pipeline failed' }
     }
 }
